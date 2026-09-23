@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/X-Korybantes/VelvetFans/refs/heads/main/favicon.ico">
+<title>VelvetFans</title>
+<style>
+  :root{
+    --bg:#ffffff; --bg-soft:#faf7fd; --line:#ece5f5;
+    --text:#1e1a26; --text-dim:#8b8291;
+    --accent:#c9a3ef; --accent-600:#8a54c9; --accent-100:#f4ecfc; --accent-pink:#f0a8cf;
+
+    /* Скорость анимации */
+    --fade-speed: 0.65s;     
+    --expand-speed: 0.65s;   
+    --hover-speed: 0.25s;    
+    --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1); 
+  }
+  
+  html {
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui,"Segoe UI",Roboto,sans-serif; font-size:15px; line-height:1.5;}
+  button{font-family:inherit;}
+  svg{display:block;}
+
+  /* ---------- Layout Shell ---------- */
+  .layout{
+    display:flex; flex-direction:row; min-height:100vh;
+  }
+
+  .side-left{
+    position:sticky; top:0; height:100vh; width:64px; flex:none;
+    padding:16px 8px; border-right:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; gap:20px;
+    background:#fff; z-index:10;
+  }
+  .brand{display:flex; align-items:center; justify-content:center;}
+  .brand img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    display: block;
+    flex: none;
+  }
+  .brand-mark{width:30px; height:30px; border-radius:9px; background:linear-gradient(135deg,var(--accent),var(--accent-pink)); flex:none;}
+  .brand-text{display:none;}
+  
+  .side-left nav{display:flex; flex-direction:column; gap:10px; width:100%; align-items:center;}
+  .nav-item{
+    display:flex; align-items:center; justify-content:center;
+    width:42px; height:42px; border-radius:50%; background:none; border:none;
+    color:var(--text-dim); cursor:pointer; transition:background var(--hover-speed) var(--ease-smooth), color var(--hover-speed) var(--ease-smooth);
+  }
+  .nav-item svg{width:20px; height:20px;}
+  .nav-item span{display:none;}
+  .nav-item.active{color:var(--accent-600); background:var(--accent-100);}
+
+  .main-wrapper{
+    flex:1; display:flex; flex-direction:column; min-height:100vh; min-width:0;
+  }
+
+  main{
+    max-width:640px; width:100%; margin:0 auto; padding:16px; box-sizing:border-box;
+  }
+
+  .side-right{
+    max-width:640px; width:100%; margin:auto auto 0 auto; padding:24px 16px; box-sizing:border-box;
+  }
+  .side-card{border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px; background:#fff;}
+  .access-badge{display:inline-block; background:var(--accent-100); color:var(--accent-600); font-size:12px; font-weight:600; padding:5px 10px; border-radius:20px; margin-bottom:8px;}
+  .side-card p{margin:0; font-size:12.5px; color:var(--text-dim); line-height:1.5;}
+  .side-footer{font-size:11px;color:var(--text-dim);text-align:center;padding-top:14px;margin:0 10px;border-top:1px solid var(--line);}
+
+  @keyframes viewFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .view-fade-in {
+    animation: viewFadeIn var(--fade-speed) var(--ease-smooth) forwards;
+  }
+
+  /* На мобильной ширине правый сайдбар становится футтером.
+     Важно: скрываем его ДО reflow основного контента, а показываем
+     только после того, как новая высота #view уже рассчитана. */
+  @keyframes sideRightFadeIn {
+    from { opacity:0; transform:translateY(6px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  @media (max-width:1039px){
+    .side-right.mobile-side-fade-in {
+      opacity:0;
+      transform:translateY(6px);
+      animation:none;
+    }
+
+    .side-right.mobile-side-fade-in.is-visible {
+      animation:sideRightFadeIn var(--fade-speed) var(--ease-smooth) forwards;
+      will-change:opacity, transform;
+    }
+  }
+
+  @media (min-width:1040px){
+    .layout{
+      display:grid; grid-template-columns:220px 640px 280px; grid-template-areas:"left main right";
+      gap:28px; max-width:1220px; margin:0 auto; padding:26px 24px; align-items:start; justify-content:center;
+    }
+    .side-left{
+      grid-area:left; position:sticky; top:26px; height:auto; width:100%;
+      border-right:none; padding:0; background:none; gap:22px; align-items:stretch;
+    }
+    .brand{justify-content:flex-start; gap:10px;}
+    .brand-text{display:block; font-weight:700; white-space:nowrap;}
+    .brand-text small{display:block; font-weight:400; color:var(--text-dim); font-size:11px;}
+    
+    .side-left nav{align-items:stretch; gap:4px;}
+    .nav-item{
+      width:100%; height:auto; border-radius:10px; padding:10px 12px;
+      justify-content:flex-start; font-size:14px; gap:10px; border:1px solid transparent;
+    }
+    .nav-item svg{width:19px; height:19px;}
+    .nav-item span{display:inline;}
+    .nav-item.active{border-color:transparent;}
+
+    .main-wrapper{display:contents;}
+    main{grid-area:main; padding:0; margin:0;}
+    .side-right{grid-area:right; padding:0; margin:0; position:sticky; top:26px;}
+  }
+
+  /* ---------- Hero & Infographics ---------- */
+  .hero{border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:16px; background:linear-gradient(155deg,var(--accent-100) 0%, #fff 60%); position:relative; overflow:hidden;}
+  .hero::after{content:""; position:absolute; right:-40px; top:-60px; width:180px; height:180px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent-pink)); opacity:.18;}
+  .hero h1{margin:0 0 8px; font-size:clamp(19px,3.8vw,24px); position:relative;}
+  .hero p{margin:0; color:var(--text-dim); font-size:13.5px; max-width:54ch; position:relative; line-height:1.55;}
+
+  .infographics-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin-bottom:16px;}
+  .info-card{border:1px solid var(--line); border-radius:14px; padding:16px; background:#fff; display:flex; gap:12px; align-items:flex-start;}
+  .info-icon{width:38px; height:38px; border-radius:10px; background:var(--accent-100); color:var(--accent-600); display:flex; align-items:center; justify-content:center; flex:none;}
+  .info-icon svg{width:20px; height:20px;}
+  .info-body h3{margin:0 0 4px; font-size:14px; font-weight:700;}
+  .info-body p{margin:0; font-size:12px; color:var(--text-dim); line-height:1.45;}
+
+  .steps-block{border:1px solid var(--line); border-radius:16px; padding:18px; background:var(--bg-soft); margin-bottom:20px;}
+  .steps-title{font-size:13px; font-weight:700; margin-bottom:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;}
+  .steps-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px;}
+  .step-item{display:flex; align-items:flex-start; gap:10px;}
+  .step-num{width:22px; height:22px; border-radius:50%; background:var(--accent-600); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex:none; margin-top:1px;}
+  .step-text{font-size:12.5px; color:var(--text); line-height:1.4;}
+
+  .section-title{font-size:14px; color:var(--text); margin:24px 0 14px; font-weight:700; display:flex; align-items:center; gap:8px;}
+  .section-title::after{content:""; flex:1; height:1px; background:var(--line);}
+
+  /* ---------- Profiles & Lists ---------- */
+  .model-row{display:flex; align-items:center; gap:14px; padding:12px 14px; border:1px solid var(--line); border-radius:14px; margin-bottom:8px; background:#fff; width:100%; cursor:pointer; text-align:left; transition:background var(--hover-speed) var(--ease-smooth);}
+  .model-row:hover{background:var(--bg-soft);}
+  .model-row .avatar{margin:0; width:48px; height:48px;}
+  .model-row h3{margin:0; font-size:15px; font-weight:700;}
+  .model-row .tag{color:var(--text-dim); font-size:12.5px;}
+
+  .avatar{width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; color:#fff; margin:0 auto 5px; border:2px solid #fff; box-shadow:0 0 0 1px var(--line); flex:none; position:relative; overflow:hidden; background:var(--accent-600);}
+  .avatar img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;}
+  .avatar-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center;}
+
+  .cover{height:130px; border-radius:16px 16px 0 0; background:linear-gradient(120deg,var(--accent),var(--accent-pink)); position:relative; overflow:hidden;}
+  .cover img{width:100%; height:100%; object-fit:cover; display:block;}
+
+  .profile-card{border:1px solid var(--line); border-radius:16px; overflow:hidden; margin-bottom:16px; background:#fff;}
+  .profile-body{padding:0 18px 18px; position:relative;}
+  .profile-body .avatar{width:84px; height:84px; font-size:24px; margin-top:-42px; border:4px solid #fff; box-shadow:0 2px 10px rgba(0,0,0,0.08);}
+  .profile-body h2{margin:10px 0 2px; font-size:22px; font-weight:800;}
+  .profile-body .tag{color:var(--text-dim); font-size:13.5px; margin-bottom:10px;}
+  .profile-body .bio{font-size:14px; color:var(--text); line-height:1.55; max-width:58ch; margin-bottom:2px;}
+
+  .tabs{display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:16px;}
+  .tab{background:none; border:none; padding:10px 4px; margin-right:20px; font-size:14px; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent; transition:color var(--hover-speed) var(--ease-smooth), border-color var(--hover-speed) var(--ease-smooth);}
+  .tab.active{color:var(--text); border-color:var(--accent-600); font-weight:700;}
+
+  /*.back{background:none; border:none; color:var(--accent-600); font-size:13.5px; cursor:pointer; padding:0 0 12px; display:block; font-weight:600;}*/
+
+  .back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 8px 5px 4px;
+  margin: 0 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent-600);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--hover-speed) var(--ease-smooth),
+    color var(--hover-speed) var(--ease-smooth);
+}
+
+.back:hover {
+  background: var(--accent-100);
+}
+
+  /* ---------- Posts ---------- */
+  .post{border:1px solid var(--line); border-radius:16px; margin-bottom:16px; overflow:hidden; background:#fff; cursor:pointer;}
+  .post-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; cursor:default;}
+  
+  .post-author-link{display:inline-flex; align-items:center; gap:12px; cursor:pointer;}
+  .post-author-link .avatar{width:44px; height:44px; font-size:14px; margin:0;}
+  .post-author-link:hover .who strong{color:var(--accent-600);}
+  
+  .post-head .who{display:flex; flex-direction:column;}
+  .post-head .who strong{font-size:15px; font-weight:700; transition:color var(--hover-speed) var(--ease-smooth);}
+  .post-head .who .meta{display:flex; gap:6px; font-size:12px; color:var(--text-dim);}
+  .post-body{padding:0 16px 16px;}
+  .caption{margin:0 0 12px; font-size:14px;}
+
+  /* ---------- Media / Scenes ---------- */
+  .media-frame{
+    border-radius:14px; border:1px solid var(--line); overflow:hidden;
+    background:linear-gradient(165deg, #ffffff 0%, #faf8fd 100%);
+    box-shadow:0 4px 16px rgba(138, 84, 201, 0.04);
+    position:relative;
+  }
+  .media-head{
+    display:flex; align-items:center; gap:8px; padding:10px 14px;
+    background:rgba(244,236,252,0.7); backdrop-filter:blur(4px);
+    border-bottom:1px solid rgba(236,229,245,0.7);
+  }
+  .media-head-icon{
+    width:24px; height:24px; border-radius:7px; flex:none; color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent-pink));
+  }
+  .media-head-icon svg{width:13px; height:13px;}
+  .media-head-label{font-size:12px; color:var(--accent-600); font-weight:700; letter-spacing:0.2px;}
+
+  .scene-block{padding:14px 16px; position:relative;}
+  
+  .scene-inner{
+    position:relative; padding-left:14px; border-left:2.5px solid var(--accent);
+  }
+
+  .scene-text{
+    font-size:13.5px; line-height:1.65; color:var(--text);
+    max-height:none; opacity:1;
+    transition:max-height var(--expand-speed) var(--ease-smooth), opacity var(--fade-speed) var(--ease-smooth);
+    overflow:hidden;
+  }
+  .scene-text p{margin:0 0 11px;}
+  .scene-text p:last-child{margin-bottom:0;}
+  .scene-text b{color:var(--accent-600);}
+  .scene-text i{color:var(--text); font-style:italic;}
+
+  .scene-text.collapsed{max-height:105px;}
+  .scene-text.faded{opacity:0;}
+
+  .scene-clip{position:relative;}
+  .scene-clip::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:50px;
+    background:linear-gradient(to bottom, rgba(250,248,253,0), #faf8fd 90%);
+    pointer-events:none; opacity:0; transition:opacity var(--fade-speed) var(--ease-smooth);
+  }
+  .scene-clip.collapsed::after{opacity:1;}
+
+  .read-more{
+    margin-top:10px; max-height:40px; opacity:1;
+    background:none; border:none; color:var(--accent-600); font-weight:600; font-size:13px;
+    cursor:pointer; padding:0; display:flex; width:max-content; align-items:center; gap:4px;
+    transition: opacity var(--fade-speed) var(--ease-smooth), max-height var(--expand-speed) var(--ease-smooth), margin var(--expand-speed) var(--ease-smooth), padding var(--expand-speed) var(--ease-smooth);
+    overflow:hidden;
+  }
+  .read-more svg{width:13px; height:13px;}
+
+  .video-cta-block{
+    margin-top:14px; padding:12px 14px; border-radius:12px;
+    background:linear-gradient(135deg, var(--accent-100), #fff);
+    border:1px solid var(--accent); display:flex; align-items:center; gap:12px;
+    cursor:pointer; transition:transform var(--hover-speed) var(--ease-smooth), box-shadow var(--hover-speed) var(--ease-smooth);
+  }
+  .video-play-icon{
+    width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent-pink));
+    color:#fff; display:flex; align-items:center; justify-content:center; flex:none;
+    box-shadow:0 2px 8px rgba(138,84,201,0.25);
+  }
+  .video-play-icon svg{width:15px; height:15px; margin-left:2px;}
+  .video-cta-text{display:flex; flex-direction:column;}
+  .video-cta-text strong{font-size:13.5px; color:var(--accent-600); font-weight:700;}
+  .video-cta-text small{font-size:11.5px; color:var(--text-dim);}
+
+  /* Блоки медиаконтента в профиле (без изменения рамок/фона при ховере) */
+  .media-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; align-items:start;}
+  .media-grid .media-frame{cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="side-left">
+    <div class="brand">
+      <img class="band" src="https://raw.githubusercontent.com/X-Korybantes/VelvetFans/refs/heads/main/VelvetFansM.png">
+      <div class="brand-text">VelvetFans<small>Доступ по NT Benefits</small></div>
+    </div>
+    <nav>
+      <button id="nav-home" class="nav-item" onclick="goNav('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9.5"/></svg>
+        <span>Главная</span>
+      </button>
+      <button id="nav-top" class="nav-item" onclick="goNav('top')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>Все модели</span>
+      </button>
+    </nav>
+  </aside>
+
+  <div class="main-wrapper">
+    <main id="view"></main>
+
+    <aside class="side-right">
+      <div class="side-card">
+        <div class="access-badge">✓ Полный доступ включён</div>
+        <p>Ваш корпоративный пакет NanoTrasen Premium Benefits™ даёт безлимитный доступ ко всем моделям VelvetFans без отдельной оплаты. VelvetFans — независимая платформа, доступ к которой предоставлен вам как часть бенефита.</p>
+      </div>
+      <div class="side-footer">VelvetFans — независимая платформа авторского контента. Доступ предоставлен в рамках NT Premium Benefits.</div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const MODELS = [
+  {
+    id: 'iris', 
+    name: 'Iris Vey', 
+    color: '#8a54c9', 
+    tag: '@hot_iris',
+    avatar: '', 
+    cover: '',  
+    bio: 'Врач смены в мед-отсеке. Делюсь закулисьем работы, личными историями и моментами между сменами — для тех, кто по ту сторону экрана.',
+    posts: [
+      {
+        id: 1, ts: 102, caption: 'Пациенты подождут пару минут.',
+        media: {
+          type: 'photo', label: 'Описание фото', 
+          paragraphs: [
+            '<b>Iris Vey</b> <i>присела на край смотрового стола, устроив планшет с записями рядом и на секунду отвлекшись от него, чтобы поймать нужный ракурс.</i>',
+            '<i>Свет в кабинете мягкий, почти вечерний — ближе к концу смены она всегда приглушает верхние лампы, оставляя только настольную. Она поправляет воротник халата и на мгновение замирает, глядя прямо в объектив.<br></i>',
+            '<i>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since 1966, when designers at Letraset and James Mosley, the librarian at St Bride Printing Library in London, took a 1914 Cicero translation and scrambled it to make dummy text for Letrasets Body Type sheets. It has survived not only many decades, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised thanks to these sheets and more recently with desktop publishing software like Aldus PageMaker and Microsoft Word including versions of Lorem Ipsum.</i>'
+          ]
+        }
+      },
+      {
+        id: 2, ts: 88, caption: 'Растяжка после смены.',
+        media: {
+          type: 'video', 
+          coverParagraphs: [
+            '<b>Iris Vey</b> <i>заходит в пустую ординаторскую и стягивает перчатки. Поправив халат, она садится на край кушетки и настраивает камеру на тумбе перед началом записи. Свет приглушен. Убедившись, что в коридоре никого нет, она выдыхает и готовится к короткой разминке перед тем, как снова надеть перчатки.</i>',
+            '<i>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since 1966, when designers at Letraset and James Mosley, the librarian at St Bride Printing Library in London, took a 1914 Cicero translation and scrambled it to make dummy text for Letrasets Body Type sheets. It has survived not only many decades, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised thanks to these sheets and more recently with desktop publishing software like Aldus PageMaker and Microsoft Word including versions of Lorem Ipsum.</i>'
+          ],
+          paragraphs: [
+            '<b>Iris Vey</b> <i>заходит в пустую ординаторскую, на ходу стягивая перчатки и бросая их в контейнер у двери.</i>',
+            '<b>Iris Vey</b> <i>говорит,</i> "Уф, наконец-то."',
+            '<b>Iris Vey</b> <i>медленно разминает плечи, по очереди заводя руки за спину. Со стороны коридора доносится приглушённый сигнал интеркома, и она на секунду замирает, прислушиваясь.</i>',
+            '<b>Iris Vey</b> <i>говорит,</i> "Не мне."',
+            '<b>Iris Vey</b> <i>выпрямляется, упирает руки в поясницу и прогибается назад, слегка поморщившись от долгой смены на ногах.</i>',
+            '<b>Iris Vey</b> <i>говорит,</i> "Ладно, ещё минута — и снова за работу."',
+            '<b>Iris Vey</b> <i>садится на кушетку, вытягивает ноги перед собой и медленно тянется к носкам, задерживаясь в этом положении на несколько секунд. Затем девушка поднимается, поправляет бейдж на груди и, окинув взглядом ординаторскую, выключает свет за собой, возвращаясь к дежурству.</i>'
+          ]
+        }
+      }
+    ]
+  }
+];
+
+let stack = [{view:'home', scrollY:0}];
+const activeVideos = new Set();
+
+function state(){ return stack[stack.length-1]; }
+
+function go(view, extra){
+  if (view !== 'post') {
+    activeVideos.clear();
+  }
+  state().scrollY = window.scrollY;
+  stack.push(Object.assign({view, scrollY:0}, extra));
+  render();
+  window.scrollTo(0,0);
+  revealMobileSideRight();
+}
+
+function goNav(view){ 
+  activeVideos.clear(); 
+  stack = [{view, scrollY:0}]; 
+  render(); 
+  window.scrollTo(0,0); 
+  revealMobileSideRight();
+}
+
+function goBack(){ 
+  activeVideos.clear();
+  if(stack.length>1) stack.pop(); 
+  render(); 
+  window.scrollTo(0, state().scrollY || 0); 
+  revealMobileSideRight();
+}
+
+function openModel(id){ 
+  const s = state();
+  if (s.view === 'wall' && s.modelId === id) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  go('wall', {modelId:id, tab:'posts'}); 
+}
+
+function openPost(modelId, postId){ go('post', {modelId, postId}); }
+
+function revealMobileSideRight(){
+  const sideRight = document.querySelector('.side-right');
+  const isMobile = window.matchMedia('(max-width: 1039px)').matches;
+  if(!sideRight || !isMobile) return;
+  const s = state();
+  const shouldFadeSideRight = s.view === 'wall' || s.view === 'post';
+  if(!shouldFadeSideRight) return;
+
+  // Дожидаемся двух кадров: первый фиксирует новый layout и scroll position,
+  // второй запускает keyframe уже из стабилизированного состояния.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      sideRight.classList.add('is-visible');
+    });
+  });
+}
+
+/* Запуск видео: синхронное затухание старого состояния -> замена -> плавное появление нового текста */
+function playVideoAction(event, modelId, postId) {
+  event.stopPropagation();
+
+  const frame = event.currentTarget.closest('.media-frame');
+  if (!frame) return;
+
+  // Повторный запуск для уже открытого видео не нужен.
+  if (activeVideos.has(`${modelId}-${postId}`)) return;
+
+  const sceneBlock = frame.querySelector('.scene-block');
+  const mediaHead = frame.querySelector('.media-head');
+  const m = MODELS.find(x => x.id === modelId);
+  const p = m ? m.posts.find(x => x.id === postId) : null;
+  if (!p || !sceneBlock || !mediaHead) return;
+
+  const currentHeight = frame.getBoundingClientRect().height;
+  const isFull = state().view === 'post';
+
+  // На время перехода фиксируем текущую высоту всего media-frame.
+  // Это не даёт блоку схлопнуться в момент исчезновения старого текста/кнопки.
+  frame.style.height = currentHeight + 'px';
+  frame.style.transition = `height var(--expand-speed) var(--ease-smooth)`;
+
+  // Старое содержимое сначала спокойно исчезает.
+  sceneBlock.style.opacity = '0';
+  sceneBlock.style.transition = 'opacity var(--fade-speed) var(--ease-smooth)';
+
+  const fadeTimer = setTimeout(() => {
+    activeVideos.add(`${modelId}-${postId}`);
+
+    const tempContainer = document.createElement('div');
+    tempContainer.innerHTML = mediaFrame(p.media, {
+      modelId: m.id,
+      postId: p.id,
+      full: isFull
+    });
+
+    const generatedFrame = tempContainer.firstElementChild;
+    const newMediaHead = generatedFrame ? generatedFrame.querySelector('.media-head') : null;
+    const newSceneBlock = generatedFrame ? generatedFrame.querySelector('.scene-block') : null;
+    const newSceneText = newSceneBlock ? newSceneBlock.querySelector('.scene-text') : null;
+
+    if (!newMediaHead || !newSceneBlock || !newSceneText) return;
+
+    // Подготавливаем новое содержимое в полностью скрытом/нулевом состоянии.
+    newSceneText.style.transition = 'none';
+    newSceneText.style.maxHeight = '0px';
+    newSceneText.style.opacity = '0';
+    newSceneText.classList.remove('collapsed', 'faded');
+
+    // Вставляем новый header и новый scene-block, но сам frame не заменяем.
+    // Так сохраняется вся текущая геометрия и не создаётся скачок DOM.
+    mediaHead.replaceWith(newMediaHead);
+    sceneBlock.replaceWith(newSceneBlock);
+
+    // Принудительно рассчитываем реальную высоту нового текста.
+    // Для измерения временно раскрываем его без transition.
+    newSceneText.style.maxHeight = 'none';
+    const fullTextHeight = newSceneText.scrollHeight;
+
+    // Получаем итоговую высоту всего frame при полностью показанном новом тексте.
+    const targetHeight = frame.scrollHeight;
+
+    // Возвращаем стартовое состояние перед запуском единой анимации.
+    newSceneText.style.maxHeight = '0px';
+    void frame.offsetHeight;
+
+    newSceneText.style.transition = 'max-height var(--expand-speed) var(--ease-smooth), opacity var(--fade-speed) var(--ease-smooth)';
+    newSceneBlock.style.opacity = '1';
+    newSceneBlock.style.transition = 'opacity var(--fade-speed) var(--ease-smooth)';
+
+    requestAnimationFrame(() => {
+      frame.style.height = targetHeight + 'px';
+      newSceneText.style.maxHeight = fullTextHeight + 'px';
+      newSceneText.style.opacity = '1';
+    });
+
+    let finished = false;
+
+    const cleanup = () => {
+      if (finished) return;
+      finished = true;
+
+      newSceneText.style.maxHeight = 'none';
+      newSceneText.style.transition = '';
+      newSceneBlock.style.transition = '';
+      frame.style.height = '';
+      frame.style.transition = '';
+    };
+
+    const onHeightEnd = (event) => {
+      if (event.target !== frame || event.propertyName !== 'height') return;
+      frame.removeEventListener('transitionend', onHeightEnd);
+      cleanup();
+    };
+
+    frame.addEventListener('transitionend', onHeightEnd);
+
+    // Защита от окружений, где transitionend может не прийти.
+    setTimeout(cleanup, 800);
+  }, 200);
+
+}
+
+/* Смена табов: умная проверка скролла перед анимацией */
+function setTab(tab){
+  if (state().tab === tab) return;
+
+  const executeSwitch = () => {
+    const wallFeed = document.getElementById('wall-feed');
+    if(wallFeed){
+      // Фиксируем реальную стартовую высоту. Раньше здесь использовался
+      // min-height + setTimeout, из-за чего в конце перехода высота резко
+      // возвращалась к auto и мобильный футтер мгновенно менял позицию.
+      const currentHeight = wallFeed.getBoundingClientRect().height;
+
+      wallFeed.style.height = currentHeight + 'px';
+      wallFeed.style.overflow = 'hidden';
+      wallFeed.style.opacity = '0';
+      wallFeed.style.transform = 'translateY(4px)';
+      wallFeed.style.transition = `height var(--fade-speed) var(--ease-smooth), opacity var(--fade-speed) var(--ease-smooth), transform var(--fade-speed) var(--ease-smooth)`;
+
+      setTimeout(() => {
+        activeVideos.clear();
+        state().tab = tab;
+
+        document.querySelectorAll('.tabs .tab').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+
+        const m = MODELS.find(x=>x.id===state().modelId);
+        const posts = [...m.posts].sort((a,b)=> b.ts - a.ts);
+
+        wallFeed.innerHTML = tab === 'media'
+          ? `<div class="media-grid">${posts.map(p => mediaFrame(p.media, {modelId: m.id, postId: p.id, onOpen:`openPost('${m.id}',${p.id})`})).join('')}</div>`
+          : posts.map(p => postCard(m, p)).join('');
+
+        // Измеряем новую естественную высоту уже после замены содержимого.
+        // Затем возвращаем стартовую высоту и только после reflow запускаем
+        // переход к целевой высоте. Благодаря этому и #wall-feed, и футтер
+        // меняют положение непрерывно, а не скачком.
+        wallFeed.style.height = 'auto';
+        const targetHeight = wallFeed.scrollHeight;
+        wallFeed.style.height = currentHeight + 'px';
+        void wallFeed.offsetHeight;
+
+        requestAnimationFrame(() => {
+          wallFeed.style.height = targetHeight + 'px';
+          wallFeed.style.opacity = '1';
+          wallFeed.style.transform = 'translateY(0)';
+        });
+
+        let finished = false;
+        const cleanup = () => {
+          if (finished) return;
+          finished = true;
+          wallFeed.removeEventListener('transitionend', onHeightEnd);
+          wallFeed.style.height = 'auto';
+          wallFeed.style.overflow = '';
+          wallFeed.style.opacity = '';
+          wallFeed.style.transform = '';
+          wallFeed.style.transition = '';
+        };
+
+        const onHeightEnd = (event) => {
+          if (event.target !== wallFeed || event.propertyName !== 'height') return;
+          cleanup();
+        };
+
+        wallFeed.addEventListener('transitionend', onHeightEnd);
+        setTimeout(cleanup, 800);
+      }, 200);
+    } else {
+      activeVideos.clear();
+      state().tab = tab;
+      render();
+    }
+  };
+
+  // Проверка скролла
+  if (window.scrollY > 15) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(executeSwitch, 400); // ждём окончания скролла
+  } else {
+    executeSwitch(); // выполняем сразу
+  }
+}
+
+function initials(name){ return name.split(' ').map(s=>s[0]).join('').toUpperCase(); }
+
+function renderAvatarHtml(m, sizePx){
+  const init = initials(m.name);
+  if(m.avatar){
+    return `<div class="avatar" style="width:${sizePx}px; height:${sizePx}px; background:${m.color}">
+      <img src="${m.avatar}" alt="${m.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+      <div class="avatar-fallback" style="display:none; background:${m.color}">${init}</div>
+    </div>`;
+  }
+  return `<div class="avatar" style="width:${sizePx}px; height:${sizePx}px; background:${m.color}">${init}</div>`;
+}
+
+function renderCoverHtml(m){
+  if(m.cover){
+    return `<div class="cover"><img src="${m.cover}" alt="" onerror="this.remove();" /></div>`;
+  }
+  return `<div class="cover"></div>`;
+}
+
+/* Раскрытие сцены: плавно растворяем кнопку, затем раскрываем блок и сжимаем кнопку */
+function expandScene(btn){
+  btn.style.pointerEvents = 'none';
+
+  const inner = btn.previousElementSibling;
+  const clip = inner ? inner.querySelector('.scene-clip') : null;
+  const text = inner ? inner.querySelector('.scene-text') : null;
+
+  if (!text) return;
+
+  // Фиксируем текущую видимую высоту текста до начала раскрытия.
+  // Это даёт браузеру реальную стартовую точку для transition.
+  const currentTextHeight = text.getBoundingClientRect().height;
+  text.style.maxHeight = currentTextHeight + 'px';
+
+  // Узнаём фактическую высоту всего текста, а не раскрываем его
+  // до произвольных 1200px.
+  const fullTextHeight = text.scrollHeight;
+
+  // Убираем градиент-маску одновременно с запуском раскрытия.
+  if (clip) clip.classList.remove('collapsed');
+
+  // В следующем кадре запускаем ВСЕ изменения одновременно:
+  // текст раскрывается, кнопка исчезает и её занимаемое место схлопывается.
+  requestAnimationFrame(() => {
+    text.style.maxHeight = fullTextHeight + 'px';
+
+    btn.style.opacity = '0';
+    btn.style.maxHeight = '0';
+    btn.style.marginTop = '0';
+    btn.style.paddingTop = '0';
+    btn.style.paddingBottom = '0';
+  });
+
+  let finished = false;
+
+  const cleanup = () => {
+    if (finished) return;
+    finished = true;
+
+    text.classList.remove('collapsed');
+    text.style.maxHeight = 'none';
+    btn.remove();
+  };
+
+  // Удаляем кнопку именно после фактического завершения раскрытия текста,
+  // а не через жёстко заданный setTimeout.
+  const onTransitionEnd = (event) => {
+    if (event.target !== text || event.propertyName !== 'max-height') return;
+    text.removeEventListener('transitionend', onTransitionEnd);
+    cleanup();
+  };
+
+  text.addEventListener('transitionend', onTransitionEnd);
+
+  // Защита на случай, если transitionend не сработает (например,
+  // если браузер/окружение прервет transition).
+  setTimeout(cleanup, 800);
+}
+
+const ICONS = {
+  photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 16-4.5-4.5a2 2 0 0 0-2.8 0L5 21"/></svg>',
+  video: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 6v12l10-6z"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  card: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+  sparkles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/></svg>'
+};
+const CHEVRON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>';
+
+function mediaFrame(media, opts){
+  opts = opts || {};
+  const full = !!opts.full;
+  const isVideo = media.type === 'video';
+  const playVideo = (typeof activeVideos !== 'undefined' && activeVideos.has(`${opts.modelId}-${opts.postId}`));
+
+  let label, icon, displayParagraphs, showReadMore, showCta;
+
+  if (isVideo) {
+    icon = ICONS.video;
+    if (playVideo) {
+      label = 'Описание видео';
+      displayParagraphs = media.paragraphs;
+      showCta = false;
+      showReadMore = false; 
+    } else {
+      label = 'Описание обложки видео';
+      displayParagraphs = media.coverParagraphs || media.paragraphs;
+      showCta = true;
+      showReadMore = !full; // Текст превью видео также можно раскрывать
+    }
+  } else {
+    icon = ICONS.photo;
+    label = media.label || 'Описание кадра на фотографии';
+    displayParagraphs = media.paragraphs;
+    showCta = false;
+    showReadMore = !full; 
+  }
+
+  const paras = (displayParagraphs || []).map(p => `<p>${p}</p>`).join('');
+  const clipClasses = showReadMore ? 'scene-clip collapsed' : 'scene-clip';
+  const textClasses = showReadMore ? 'scene-text collapsed' : 'scene-text';
+
+  let videoCtaHtml = '';
+  if (showCta) {
+    const action = `playVideoAction(event, '${opts.modelId}', ${opts.postId})`;
+    videoCtaHtml = `
+      <div class="video-cta-block" onclick="${action}">
+        <div class="video-play-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        <div class="video-cta-text">
+          <strong>Включить видео</strong>
+        </div>
+      </div>
+    `;
+  }
+
+  let readMoreHtml = '';
+  if (showReadMore) {
+    readMoreHtml = `<button class="read-more" onclick="event.stopPropagation(); expandScene(this)">Рассмотреть детальнее ${CHEVRON}</button>`;
+  }
+
+  return `<div class="media-frame" ${opts.onOpen ? `onclick="${opts.onOpen}"` : ''}>
+    <div class="media-head">
+      <div class="media-head-icon">${icon}</div>
+      <span class="media-head-label">${label}</span>
+    </div>
+    <div class="scene-block">
+      <div class="scene-inner">
+        <div class="${clipClasses}"><div class="${textClasses}">${paras}</div></div>
+      </div>
+      ${readMoreHtml}
+      ${videoCtaHtml}
+    </div>
+  </div>`;
+}
+
+function postCard(m, p){
+  const openCall = `openPost('${m.id}', ${p.id})`;
+  return `<article class="post" onclick="${openCall}">
+    <div class="post-head">
+      <div class="post-author-link" onclick="event.stopPropagation(); openModel('${m.id}')">
+        ${renderAvatarHtml(m, 44)}
+        <div class="who">
+          <strong>${m.name}</strong>
+          <span class="meta"><span>${m.tag}</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="post-body">
+      <p class="caption">${p.caption}</p>
+      ${mediaFrame(p.media, {modelId: m.id, postId: p.id})}
+    </div>
+  </article>`;
+}
+
+function renderHome(){
+  const allPosts = MODELS.flatMap(m => m.posts.map(p => ({m, p}))).sort((a,b)=> b.p.ts - a.p.ts);
+  return `
+    <div class="hero">
+      <h1>VelvetFans — Экспрессия и приватность</h1>
+      <p>Закрытая платформа эксклюзивного авторского контента. Наблюдайте за личными историями, рабочими моментами и специальными фото- и видео-сценами от авторов в комфортном формате.</p>
+    </div>
+
+    <div class="infographics-grid">
+      <div class="info-card">
+        <div class="info-icon">${ICONS.sparkles}</div>
+        <div class="info-body">
+          <h3>Авторский контент</h3>
+          <p>Уникальные медиаконтент от авторов без цензуры и сторонних ограничений.</p>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">${ICONS.card}</div>
+        <div class="info-body">
+          <h3>Включено в NT Benefits</h3>
+          <p>Полный доступ ко всем профилям и эксклюзивам уже оплачен вашей корпоративной подпиской.</p>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">${ICONS.shield}</div>
+        <div class="info-body">
+          <h3>Конфиденциально</h3>
+          <p>Приватный просмотр ленты и закрытых материалов без рекламы и сбора метрик.</p>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">${ICONS.star}</div>
+        <div class="info-body">
+          <h3>Прямой контакт</h3>
+          <p>Погружайтесь в контент и детали повседневной жизни выбранных моделей.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Лента публикаций</div>
+    ${allPosts.map(x => postCard(x.m, x.p)).join('') || '<p style="color:var(--text-dim);font-size:13.5px;">Постов не найдено.</p>'}
+  `;
+}
+
+function renderTop(){
+  return `
+    <div class="section-title">Все модели платформы</div>
+    ${MODELS.map(m => `
+      <button class="model-row" onclick="openModel('${m.id}')">
+        ${renderAvatarHtml(m, 48)}
+        <div>
+          <h3>${m.name}</h3>
+          <div class="tag">${m.tag}</div>
+        </div>
+      </button>`).join('')}
+  `;
+}
+
+function renderWall(modelId, tab){
+  const m = MODELS.find(x=>x.id===modelId);
+  const activeTab = tab || 'posts';
+  const posts = [...m.posts].sort((a,b)=> b.ts - a.ts);
+  const body = activeTab === 'media'
+    ? `<div class="media-grid">${posts.map(p => mediaFrame(p.media, {modelId: m.id, postId: p.id, onOpen:`openPost('${m.id}',${p.id})`})).join('')}</div>`
+    : posts.map(p => postCard(m, p)).join('');
+
+  return `
+    <button class="back" onclick="goBack()">← Назад</button>
+    <div class="profile-card">
+      ${renderCoverHtml(m)}
+      <div class="profile-body">
+        <div style="cursor:pointer; display:inline-block;" onclick="openModel('${m.id}')">
+          ${renderAvatarHtml(m, 84)}
+          <h2>${m.name}</h2>
+          <div class="tag">${m.tag}</div>
+        </div>
+        <p class="bio">${m.bio}</p>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab ${activeTab==='posts'?'active':''}" data-tab="posts" onclick="setTab('posts')">Посты</button>
+      <button class="tab ${activeTab==='media'?'active':''}" data-tab="media" onclick="setTab('media')">Медиаконтент</button>
+    </div>
+    <div id="wall-feed">${body}</div>
+  `;
+}
+
+function renderPost(modelId, postId){
+  const m = MODELS.find(x=>x.id===modelId);
+  const p = m.posts.find(x=>x.id===postId);
+  return `
+    <button class="back" onclick="goBack()">← Назад</button>
+    <article class="post" style="cursor:default;">
+      <div class="post-head">
+        <div class="post-author-link" onclick="openModel('${m.id}')">
+          ${renderAvatarHtml(m, 44)}
+          <div class="who">
+            <strong>${m.name}</strong>
+            <span class="meta"><span>${m.tag}</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="post-body">
+        <p class="caption">${p.caption}</p>
+        ${mediaFrame(p.media, {full:true, modelId: m.id, postId: p.id})}
+      </div>
+    </article>
+  `;
+}
+
+function render(){
+  const s = state();
+  document.getElementById('nav-home').classList.toggle('active', stack.length===1 && stack[0].view==='home');
+  document.getElementById('nav-top').classList.toggle('active', stack.length===1 && stack[0].view==='top');
+
+  const sideRight = document.querySelector('.side-right');
+  const isMobile = window.matchMedia('(max-width: 1039px)').matches;
+  const shouldFadeSideRight = isMobile && (s.view === 'wall' || s.view === 'post');
+
+  // Ключевой момент: футтер скрываем ДО изменения #view.
+  // Тогда его неизбежный reflow при изменении высоты основного контента
+  // происходит невидимо для пользователя.
+  if (sideRight) {
+    sideRight.classList.remove('mobile-side-fade-in', 'is-visible');
+
+    if (shouldFadeSideRight) {
+      sideRight.classList.add('mobile-side-fade-in');
+    } else {
+    }
+  }
+  
+  let html;
+  if(s.view==='home') html = renderHome();
+  else if(s.view==='top') html = renderTop();
+  else if(s.view==='wall') html = renderWall(s.modelId, s.tab);
+  else if(s.view==='post') html = renderPost(s.modelId, s.postId);
+  
+  const viewEl = document.getElementById('view');
+  viewEl.innerHTML = html;
+
+  viewEl.classList.remove('view-fade-in');
+  void viewEl.offsetWidth;
+  viewEl.classList.add('view-fade-in');
+
+  // Ничего не запускаем здесь: открытие футтера происходит после того, как
+  // навигационная функция завершит render + scrollTo и layout стабилизируется.
+}
+
+render();
+</script>
+</body>
+</html>
